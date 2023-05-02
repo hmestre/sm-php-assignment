@@ -1,0 +1,36 @@
+ARG PHP_VERSION=8.1.12
+
+FROM php:${PHP_VERSION}-fpm-alpine AS sm_assignment_app_php_base
+MAINTAINER Sergey Rakhmanchuk <sergey.rakhmanchuk@supermetrics.com>
+
+ARG XDEBUG_VERSION=3.1.6
+
+# Install memcached extension
+RUN apk add --no-cache \
+    libmemcached-dev libmemcached autoconf pkgconfig g++ zlib-dev make  \
+    && pecl install memcached \
+    && docker-php-ext-enable memcached \
+    && apk del make g++ autoconf pkgconfig \
+    && rm -rf /tmp/*;
+
+# Install curl extension
+RUN apk add --no-cache \
+    curl-dev \
+    && docker-php-ext-configure curl \
+    && docker-php-ext-install -j$(nproc) curl \
+    && docker-php-ext-enable curl \
+    && rm -rf /tmp/*;
+
+# Install opcache extension
+RUN docker-php-ext-configure opcache \
+    && docker-php-ext-install -j$(nproc) opcache \
+    && docker-php-ext-enable opcache;
+
+# Install xdebug extension
+RUN apk --no-cache add pcre-dev ${PHPIZE_DEPS} \
+    && pecl channel-update pecl.php.net \
+    && pecl install xdebug-${XDEBUG_VERSION} \
+    && apk del pcre-dev ${PHPIZE_DEPS} \
+    && rm -rf /tmp/*;
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

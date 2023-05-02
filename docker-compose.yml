@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  app-web:
+    hostname: ${APPLICATION_WEB_SERVER_HOSTNAME}
+    container_name: ${APPLICATION_WEB_SERVER_CONTAINER_NAME}
+    image: ${APPLICATION_WEB_SERVER_IMAGE_NAME}:${APPLICATION_WEB_SERVER_IMAGE_TAG}
+    volumes:
+      - ./app/public:${APPLICATION_ROOT_DIR}/public:ro
+    env_file:
+      - env/nginx.env
+    environment:
+      - APPLICATION_PHP_FPM_HOSTNAME=${APPLICATION_PHP_FPM_HOSTNAME}
+      - APPLICATION_PHP_FPM_INTERNAL_PORT=${APPLICATION_PHP_FPM_INTERNAL_PORT}
+      - APPLICATION_WEB_SERVER_INTERNAL_PORT=${APPLICATION_WEB_SERVER_INTERNAL_PORT}
+      - APPLICATION_ROOT_DIR=${APPLICATION_ROOT_DIR}
+    depends_on:
+      - app-php-fpm
+    ports:
+      - ${APPLICATION_PHP_SERVER_EXTERNAL_PORT}:${APPLICATION_WEB_SERVER_INTERNAL_PORT}
+        
+  app-php-fpm:
+    hostname: ${APPLICATION_PHP_FPM_HOSTNAME}
+    container_name: ${APPLICATION_PHP_FPM_CONTAINER_NAME}
+    image: ${APPLICATION_PHP_FPM_IMAGE_NAME}:${APPLICATION_PHP_FPM_IMAGE_TAG}
+    env_file:
+      - env/php-fpm.env
+    volumes:
+      - ./app:${APPLICATION_ROOT_DIR}:rw
+
+networks:
+  default:
+    name: sm_assignment

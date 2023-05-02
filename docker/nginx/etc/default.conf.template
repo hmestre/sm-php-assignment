@@ -1,0 +1,52 @@
+upstream backend {
+    server ${APPLICATION_PHP_FPM_HOSTNAME}:${APPLICATION_PHP_FPM_INTERNAL_PORT};
+}
+
+server {
+
+  listen ${APPLICATION_WEB_SERVER_INTERNAL_PORT};
+  server_name localhost;
+
+  root ${APPLICATION_ROOT_DIR}/public;
+
+  index index.php;
+  autoindex off;
+  charset UTF-8;
+
+  client_max_body_size ${APPLICATION_WEB_SERVER_MAX_BODY_SIZE};
+
+  location / {
+    try_files $uri $uri/ /index.php$is_args$args;
+  }
+
+  # PHP entry point
+  location ~ ^/(index)\.php$ {
+    try_files $uri =404;
+    fastcgi_pass backend;
+    fastcgi_buffers 16 16k;
+    fastcgi_buffer_size 32k;
+
+    fastcgi_read_timeout 60s;
+    fastcgi_connect_timeout 60s;
+
+    fastcgi_index index.php;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    include fastcgi_params;
+
+    internal;
+  }
+
+  gzip on;
+  gzip_disable "msie6";
+
+  gzip_comp_level 6;
+  gzip_min_length 1100;
+  gzip_buffers 16 8k;
+  gzip_proxied any;
+  gzip_types
+    text/plain
+    text/xml
+    application/json
+    application/xml
+  gzip_vary on;
+}

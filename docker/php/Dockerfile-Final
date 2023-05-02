@@ -1,0 +1,18 @@
+FROM sm_assignment_app_php_base:latest AS sm_assignment_app_php_fpm
+MAINTAINER Sergey Rakhmanchuk <sergey.rakhmanchuk@supermetrics.com>
+
+RUN apk add --no-cache bash
+
+RUN mkdir $PHP_INI_DIR/templates
+
+COPY ./etc/php.ini $PHP_INI_DIR/templates/zz-php.ini
+COPY ./etc/xdebug.ini $PHP_INI_DIR/templates/zz-xdebug.ini
+
+ADD ./bin/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+RUN chmod +x /usr/local/bin/docker-entrypoint
+
+ARG APPLICATION_ROOT_DIR
+WORKDIR $APPLICATION_ROOT_DIR
+
+ENTRYPOINT ["docker-entrypoint"]
+CMD ["php-fpm"]
